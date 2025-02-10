@@ -2,55 +2,53 @@ import aerosandbox as asb
 import aerosandbox.numpy as np
 from aerosandbox.tools import units
 from typing import List
-from J import JetParam, JetControl, WingJSec
-from write_JVL import JVL
+from J import JetParam, JetControl, WingJSec, JVL, JWing
 
 
-wing = asb.Wing(
+jw01 = asb.Airfoil(coordinates='.\\jw01.dat')
+wing = JWing(
     name="Main Wing",
     symmetric=True,
+    JetParam=JetParam(hdisk=0.45, fh=0, djet0=-2.0, djet1=-0.2, djet3=-0.0003),
     xsecs=[
         WingJSec(
             xyz_le=[0, 0, 0],
             chord=15*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(coordinates=".\\bw02.dat")
+            airfoil=jw01
         ),
         WingJSec(
             xyz_le=[0, 6*units.inch, 0],
             chord=15*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(coordinates=".\\bw02.dat"),
+            airfoil=jw01,
             control_surfaces = [asb.ControlSurface(name="Flap1", hinge_point=0.66, deflection=0)],
-            jet_controls = [JetControl(jet_name="FlapJet1", gain=1, sgn_dup=1)],
-            jet_params = [JetParam(hdisk=0.45, fh=1.0, djet0=-2.0, djet1=-0.2, djet3=-0.0003)],
+            JetControls= [JetControl(jet_name="FlapJet1", gain=1, sgn_dup=1)],
         ),
         WingJSec(
             xyz_le=[0, 23*units.inch, 0],
             chord=15*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(coordinates=".\\bw02.dat"),
+            airfoil=jw01,
             control_surfaces = [asb.ControlSurface(name="Flap1", hinge_point=0.66, deflection=0), asb.ControlSurface(name="Flap2", hinge_point=0.66, deflection=0)],
-            jet_controls = [JetControl(jet_name="FlapJet2", gain=1, sgn_dup=1)],
-            jet_params = [JetParam(hdisk=0.45, fh=1.0, djet0=-2.0, djet1=-0.2, djet3=-0.0003)],
+            JetControls= [JetControl(jet_name="FlapJet1", gain=1, sgn_dup=1), JetControl(jet_name="FlapJet2", gain=1, sgn_dup=1)],
         ),
         WingJSec(
             xyz_le=[0, 41*units.inch, 0],
             chord=15*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(coordinates=".\\bw02.dat"),
+            airfoil=jw01,
             control_surfaces = [asb.ControlSurface(name="Flap2", hinge_point=0.66, deflection=0), asb.ControlSurface(name="Aileron", hinge_point=0.66, deflection=0)],
-            jet_controls = [JetControl(jet_name="AilJet", gain=1, sgn_dup=1)],
-            jet_params = [JetParam(hdisk=0.45, fh=1.0, djet0=-2.0, djet1=-0.2, djet3=-0.0003)],
+            JetControls= [JetControl(jet_name="FlapJet2", gain=1, sgn_dup=1), JetControl(jet_name="AilJet", gain=1, sgn_dup=-1)],
         ),
         WingJSec(
             xyz_le=[5*units.inch, 60*units.inch, 0],
             chord=10*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(coordinates=".\\bw02.dat"),
-            control_surfaces = [asb.ControlSurface(name="Aileron", hinge_point=0.66, deflection=0)]
+            airfoil=jw01,
+            control_surfaces = [asb.ControlSurface(name="Aileron", hinge_point=0.66, deflection=0)],
+            JetControls= [JetControl(jet_name="AilJet", gain=1, sgn_dup=-1)],
         )
-
     ]
 )
 vertical_tail = asb.Wing(
@@ -124,7 +122,6 @@ def generate_fuselage_xsecs(N: int) -> List[asb.FuselageXSec]:
 
     return xsecs
 
-# Example usage
 fuselage_xsecs = generate_fuselage_xsecs(10)  # Generates 10 sections
 fuselage = asb.Fuselage(
     name='Fuselage',
@@ -132,11 +129,12 @@ fuselage = asb.Fuselage(
 )
 
 plane = asb.Airplane(
-    name="Test",
+    name="Initial Aircraft",
     xyz_ref=[0, 0, 0],
     wings=[wing, vertical_tail, horizinatal_tail],
-    fuselages=[fuselage]
+    # fuselages=[fuselage]
 )
+
 avl_plane = JVL(
     airplane=plane,
     op_point=asb.OperatingPoint(
@@ -150,6 +148,18 @@ avl_plane = JVL(
     avl_command='.\\jvl2.20.exe')
 avl_plane.default_analysis_specific_options = {
         asb.Airplane: dict(profile_drag_coefficient=0),
+        JWing: dict(
+            wing_level_spanwise_spacing=True,
+            spanwise_resolution=12,
+            spanwise_spacing="cosine",
+            chordwise_resolution=12,
+            chordwise_spacing="cosine",
+            component=None,  # This is an int
+            no_wake=False,
+            no_alpha_beta=False,
+            no_load=False,
+            drag_polar=None,
+        ),
         asb.Wing: dict(
             wing_level_spanwise_spacing=True,
             spanwise_resolution=12,
@@ -171,4 +181,13 @@ avl_plane.default_analysis_specific_options = {
         asb.Fuselage: dict(panel_resolution=24, panel_spacing="cosine"),
     }
 
-avl_plane.write_jvl('jvl_test', CLAF=False)
+avl_plane.write_jvl('jvl_test', CLAF=False, j=True)
+
+# """ Defining Plane Based on Sections"""
+
+# Wing
+
+## Section 1:
+
+# jw01 = asb.Airfoil(name='.\\jw01.dat')
+# jw01.draw()
