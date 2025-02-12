@@ -32,11 +32,6 @@ for i in range(int(num_motors/2)):
     )
 total_mass_properties = total_mass_properties + motor_mass_props + fan_mass_properties
 
-# airframe_mass_props = asb.MassProperties(
-#     mass=9.8*units.lbm,
-#     x_cg=0.25
-# )
-
 fuselage_mass_props = asb.MassProperties(
     mass = 0.2,
     x_cg = wing.xsecs[0].chord*0.5
