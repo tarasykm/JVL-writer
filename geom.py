@@ -9,16 +9,16 @@ jw01 = asb.Airfoil(coordinates='.\\jw01.dat')
 wing = JWing(
     name="Main Wing",
     symmetric=True,
-    JetParam=JetParam(hdisk=0.45, fh=0, djet0=-2.0, djet1=-0.2, djet3=-0.0003),
+    JetParam=JetParam(hdisk=0.188, fh=0.0, djet0=0.0, djet1=0.0, djet3=0.0),
     xsecs=[
+        # WingJSec(
+        #     xyz_le=[0, 0, 0],
+        #     chord=15*units.inch,
+        #     twist=0,
+        #     airfoil=jw01
+        # ),
         WingJSec(
             xyz_le=[0, 0, 0],
-            chord=15*units.inch,
-            twist=0,
-            airfoil=jw01
-        ),
-        WingJSec(
-            xyz_le=[0, 6*units.inch, 0],
             chord=15*units.inch,
             twist=0,
             airfoil=jw01,
@@ -38,20 +38,20 @@ wing = JWing(
             chord=15*units.inch,
             twist=0,
             airfoil=jw01,
-            control_surfaces = [asb.ControlSurface(name="Flap2", hinge_point=0.66, deflection=0), asb.ControlSurface(name="Aileron", hinge_point=0.66, deflection=0)],
+            control_surfaces = [asb.ControlSurface(name="Flap2", hinge_point=0.66, deflection=0), asb.ControlSurface(name="Aileron", symmetric=False, hinge_point=0.66, deflection=0)],
             JetControls= [JetControl(jet_name="FlapJet2", gain=1, sgn_dup=1), JetControl(jet_name="AilJet", gain=1, sgn_dup=-1)],
         ),
         WingJSec(
-            xyz_le=[5*units.inch, 60*units.inch, 0],
+            xyz_le=[6*units.inch, 60*units.inch, 0],
             chord=10*units.inch,
             twist=0,
             airfoil=jw01,
-            control_surfaces = [asb.ControlSurface(name="Aileron", hinge_point=0.66, deflection=0)],
+            control_surfaces = [asb.ControlSurface(name="Aileron", symmetric=False, hinge_point=0.66, deflection=0)],
             JetControls= [JetControl(jet_name="AilJet", gain=1, sgn_dup=-1)],
         )
     ]
 )
-vertical_tail = asb.Wing(
+vertical_tail = JWing(
     name="Vertical Tail",
     symmetric=False,
     xsecs=[
@@ -59,20 +59,20 @@ vertical_tail = asb.Wing(
             xyz_le=[0, 0, 0],
             chord=15*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(name="NACA0010"),
+            airfoil=asb.Airfoil(name="NACA0012"),
             control_surfaces = [asb.ControlSurface(name="Rudder", hinge_point=0.66, deflection=0)]
         ),
         WingJSec(
             xyz_le=[10.5*units.inch, 0, 15*units.inch],
             chord=11*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(name="NACA0010"),
+            airfoil=asb.Airfoil(name="NACA0012"),
             control_surfaces = [asb.ControlSurface(name="Rudder", hinge_point=0.66, deflection=0)]
         )
     ]
 ).translate([52.5*units.inch, 0, 0])
     
-horizinatal_tail = asb.Wing(
+horizinatal_tail = JWing(
     name="Horizontal Tail",
     symmetric=True,
     xsecs=[
@@ -80,14 +80,14 @@ horizinatal_tail = asb.Wing(
             xyz_le=[0, 0, 0],
             chord=12*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(name="NACA0010"),
+            airfoil=asb.Airfoil(name="NACA0012"),
             control_surfaces = [asb.ControlSurface(name="Elevator", hinge_point=0.5, deflection=0)]
         ),
         WingJSec(
             xyz_le=[3*units.inch, 25*units.inch, 0],
             chord=7*units.inch,
             twist=0,
-            airfoil=asb.Airfoil(name="NACA0010"),
+            airfoil=asb.Airfoil(name="NACA0012"),
             control_surfaces = [asb.ControlSurface(name="Elevator", hinge_point=0.5, deflection=0)]
         )
     ]
@@ -150,9 +150,9 @@ avl_plane.default_analysis_specific_options = {
         asb.Airplane: dict(profile_drag_coefficient=0),
         JWing: dict(
             wing_level_spanwise_spacing=True,
-            spanwise_resolution=12,
+            spanwise_resolution=25,
             spanwise_spacing="cosine",
-            chordwise_resolution=12,
+            chordwise_resolution=25,
             chordwise_spacing="cosine",
             component=None,  # This is an int
             no_wake=False,
@@ -181,7 +181,7 @@ avl_plane.default_analysis_specific_options = {
         asb.Fuselage: dict(panel_resolution=24, panel_spacing="cosine"),
     }
 
-avl_plane.write_jvl('jvl_test', CLAF=False, j=True)
+avl_plane.write_jvl('821p1', CLAF=False, j=True)
 
 # """ Defining Plane Based on Sections"""
 

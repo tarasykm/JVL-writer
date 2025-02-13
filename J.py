@@ -6,9 +6,18 @@ import aerosandbox.numpy as np
 
 
 class JWing(asb.Wing):
-    def __init__(self, name, xsecs, JetParam = None, symmetric=True, **kwargs):
+    def __init__(self, name, xsecs, JetParam = None, symmetric=True, JetSpacing=None, **kwargs):
         super().__init__(name=name, xsecs=xsecs, symmetric=symmetric, **kwargs)
         self.JetParam = JetParam
+        if JetSpacing is None:
+            self.JetSpacing = {
+                "Nujet": 0.2,
+                "Cspu": 0.0,
+                "Nwjet": 12,
+                "Cewsp": -2.0,
+            }
+        else:
+            self.JetSpacing = JetSpacing
         
 class JVL(AVL):
     def __init__(self, airplane, op_point, xyz_ref = [0, 0, 0], ground_effect = False, ground_effect_height = 0.0, AVL_spacing_parameters = None, avl_command = '.\\jvl2.20'):
@@ -72,14 +81,16 @@ class JVL(AVL):
 
                 spacing_line = f"{wing_options['chordwise_resolution']}   {self.AVL_spacing_parameters[wing_options['chordwise_spacing']]}"
                 if wing_options["wing_level_spanwise_spacing"]:
-                    spacing_line += f"   {wing_options['spanwise_resolution']}   {self.AVL_spacing_parameters[wing_options['spanwise_spacing']]}"""#   {self.AVL_spacing_parameters[wing_options.get('Nujet', '')]}   {self.AVL_spacing_parameters[wing_options.get('Cusp', '')]}   {self.AVL_spacing_parameters[wing_options.get('Nwjet', '')]}   {self.AVL_spacing_parameters[wing_options.get('Cewsp','')]}"
+                    spacing_line += f"   {wing_options['spanwise_resolution']}   {self.AVL_spacing_parameters[wing_options['spanwise_spacing']]}"
+                    if isinstance(wing, JWing):
+                        spacing_line += f"   {wing.JetSpacing['Nujet']}   {wing.JetSpacing['Cspu']}   {wing.JetSpacing['Nwjet']}   {wing.JetSpacing['Cewsp']}"
 
                 jvl_file += clean(
                     f"""\
                 #{"=" * 79}
                 SURFACE
                 {wing.name}
-                #Nchordwise  Cspace  [Nspanwise   Sspace]
+                #Nchord  Cspace  [ Nspan Sspace  Nujet Cusp  Nwjet Cwsp ]
                 {spacing_line}
                 
                 """
@@ -128,7 +139,7 @@ class JVL(AVL):
                     )
                 
                 if j:
-                    if isinstance(wing, JWing):
+                    if isinstance(wing, JWing) and wing.JetParam is not None:
                         JetParam = wing.JetParam
                         jvl_file += clean(
                             f"""\
@@ -155,7 +166,6 @@ class JVL(AVL):
                             {surf.name} 1 {xhinge:.8g} 0 0 0 {sign_dup}
                             """
                         ) + "\n"
-
 
                         control_surface_commands[i].append(command)
                         # control_surface_commands[i + 1].append(command)
@@ -289,19 +299,8 @@ class WingJSec(asb.WingXSec):
         :param twist: Twist angle at this section
         :param airfoil: AeroSandbox Airfoil object
         :param control_surfaces: List of control surfaces
-        :param jet_name: Name of the jet control variable
-        :param gain: Control gain (Delta_Vjet/Vinf per jet variable)
-        :param sgn_dup: Symmetric (1) or differential (-1) blowing
-        :param hdisk: Disk height scaling factor
-        :param fh: Type of propulsor (0 for long-duct, 1 for no-duct)
-        :param djet0: Jet deviation angle due to TE wedge angle
-        :param djet1: Incomplete jet turning due to finite jet height/flap ratio
-        :param djet3: BL separation effect on jet turning
+        :param JetControls: List of JetControl objects
         """
         super().__init__(xyz_le=xyz_le, chord=chord, twist=twist, airfoil=airfoil, control_surfaces=control_surfaces)
         self.JetControls = JetControls
     
-    def avl_jet_control(self):
-        """Returns formatted AVL jet control data"""
-        return f"JETCONTROL\n {self.jet_name}  {self.gain:.3f}  {self.sgn_dup:.3f}\n" \
-               f"JETPARAM\n {self.hdisk:.3f}  {self.fh:.3f}  {self.djet0:.3f}  {self.djet1:.3f}  {self.djet3:.6f}\n"
